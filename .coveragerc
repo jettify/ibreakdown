@@ -1,0 +1,4 @@
+[run]
+branch = True
+source = ibreakdown
+omit = site-packages, .tox
