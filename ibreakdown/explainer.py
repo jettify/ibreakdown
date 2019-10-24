@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from .utils import normalize_array, multiply_row, to_matrix
+from .explanation import Explanation
 
 
 class RegressionExplainer:
@@ -26,6 +27,9 @@ class RegressionExplainer:
         exp = self._explain_bottom_up(instance)
         return exp
 
+    def _mean_predict(self, data):
+        return self._clf.predict(data).mean(axis=0)
+
     def _explain_bottom_up(self, instance):
         num_rows, num_features = self._data.shape
         important_variables = {}
@@ -43,30 +47,28 @@ class RegressionExplainer:
                     - sum(important_variables[g] for g in group)
                 )
 
-        preds = sorted(important_variables.items(), key=lambda v: -abs(v[1]))
-        print(preds)
+        preds = sorted(important_variables.items(), key=lambda v: -np.linalg.norm(v[1], axis=0))
         return self._explain_path(preds, instance)
 
     def _explain_path(self, path, instance):
         _, num_features = self._data.shape
         features = set(range(num_features))
         new_data = np.copy(self._data)
-        important_variables = {}
+        important_variables = []
         while features:
             group, _ = path.pop(0)
             if not set([group] if isinstance(group, int) else group).issubset(features):
                 continue
             new_data[:, group] = instance[:, group]
             pred_mean = self._mean_predict(new_data)
-            important_variables[group] = pred_mean
+            important_variables.append((group, pred_mean))
             features.difference_update(set([group] if isinstance(group, int) else group))
 
-        contrib = np.diff([self._baseline[0][0]] + list(important_variables.values()))
-        print(contrib)
-        return contrib
-
-    def _mean_predict(self, data):
-        return self._clf.predict(data).mean(axis=0)
+        cummulative = [v[1] for v in important_variables]
+        feature_indexes = [v[0] for v in important_variables]
+        contrib = np.diff([self._baseline[0][0]] + cummulative)
+        featrue_values = feature_goup_vavlues(feature_indexes, instance)
+        return Explanation(feature_indexes, featrue_values, contrib, self._baseline[0][0], self._columns)
 
 
 def features_groups(num_features):
@@ -77,28 +79,14 @@ def features_groups(num_features):
     return result
 
 
-
-class Explanation:
-
-    def __init__(self, names, feature_values, contributions):
-        self.feature_names = names
-        self.feature_values = feature_values
-        self.contributions = contributions
-
-    def to_df(self):
-        df = pd.DataFrame({
-            'feature_name': self.names,
-            'feature_value': self.feature_values,
-            'contribution': self.contributions,
-        })
-        return df
-
-    def print(self):
-        pass
-
-    def _build(self, important_variables, columns,  predict_instance):
-        pass
+def feature_goup_vavlues(feature_groups, instance):
+    featrue_values = [instance[:, group][0] if isinstance(group, int) else instance[:, group].tolist() for group in feature_groups]
+    return featrue_values
 
 
-class ClassificationExplainer:
-    pass
+class ClassificationExplainer(RegressionExplainer):
+
+    def _most_important(self, yhats_diff):
+        most_important_idx = np.argmax(np.linalg.norm(yhats_diff, axis=1))
+        return most_important_idx
+
