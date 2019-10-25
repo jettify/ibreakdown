@@ -19,7 +19,7 @@ class RegressionExplainer:
 
         self._columns = columns
         self._hints = hints
-        self._baseline = self._mean_predict(data).reshape(1, -1)
+        self._baseline = self._mean_predict(data)
 
     def explain(self, row):
         instance = to_matrix(row)
@@ -39,11 +39,11 @@ class RegressionExplainer:
             new_data[:, group] = instance[:, group]
             pred_mean = self._mean_predict(new_data)
             if isinstance(group, int):
-                important_variables[group] = pred_mean - self._baseline[0][0]
+                important_variables[group] = pred_mean - self._baseline
             else:
                 important_variables[group] = (
                     pred_mean
-                    - self._baseline[0][0]
+                    - self._baseline
                     - sum(important_variables[g] for g in group)
                 )
 
@@ -66,9 +66,9 @@ class RegressionExplainer:
 
         cummulative = [v[1] for v in important_variables]
         feature_indexes = [v[0] for v in important_variables]
-        contrib = np.diff([self._baseline[0][0]] + cummulative)
+        contrib = np.diff([self._baseline] + cummulative)
         featrue_values = feature_goup_vavlues(feature_indexes, instance)
-        return Explanation(feature_indexes, featrue_values, contrib, self._baseline[0][0], self._columns)
+        return Explanation(feature_indexes, featrue_values, contrib, self._baseline, self._columns)
 
 
 def features_groups(num_features):
