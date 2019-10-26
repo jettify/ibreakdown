@@ -65,7 +65,7 @@ setup(
     license='Apache 2',
     packages=find_packages(),
     extras_require=extras_require,
-    keywords=['ibreakdown', 'model explanation'],
+    keywords=['ibreakdown', 'model explanation', 'xai'],
     zip_safe=True,
     include_package_data=True,
 )

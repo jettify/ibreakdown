@@ -1,6 +1,5 @@
 import numpy as np
-import pandas as pd
-from .utils import normalize_array, multiply_row, to_matrix
+from .utils import normalize_array, to_matrix
 from .explanation import Explanation
 
 
