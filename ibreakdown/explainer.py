@@ -46,11 +46,11 @@ class RegressionExplainer:
                     - sum(important_variables[g] for g in group)
                 )
 
-        preds = sorted(
-            important_variables.items(),
-            key=lambda v: -np.linalg.norm(v[1], axis=0),
-        )
+        preds = self._sort(important_variables)
         return self._explain_path(preds, instance)
+
+    def _sort(self, important_variables):
+        return sorted(important_variables.items(), key=lambda v: -abs(v[1]))
 
     def _explain_path(self, path, instance):
         _, num_features = self._data.shape
@@ -83,6 +83,14 @@ class RegressionExplainer:
         )
 
 
+def magnituge(v):
+    if isinstance(v[0], int):
+        impact = np.array([v[1]])
+    else:
+        impact = np.array(v[1])
+    return np.linalg.norm(impact, axis=1)[0]
+
+
 def features_groups(num_features):
     result = list(range(0, num_features))
     for i in range(0, num_features):
@@ -102,6 +110,9 @@ def feature_goup_vavlues(feature_groups, instance):
 
 
 class ClassificationExplainer(RegressionExplainer):
-    def _most_important(self, yhats_diff):
-        most_important_idx = np.argmax(np.linalg.norm(yhats_diff, axis=1))
-        return most_important_idx
+
+    def _sort(self, important_variables):
+        return sorted(important_variables.items(), key=lambda v: -magnituge(v))
+
+    def _mean_predict(self, data):
+        return self._clf.predict_proba(data).mean(axis=0)

@@ -25,7 +25,7 @@ def test_regression(seed):
     clf.fit(X_train, y_train)
     explainer = RegressionExplainer(clf)
     explainer.fit(X_train, columns)
-    for i in range(3):
+    for i in range(2):
         observation = X_test[i: i + 1]
         pred = clf.predict(observation)
         exp = explainer.explain(observation)
