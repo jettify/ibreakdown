@@ -48,7 +48,6 @@ class RegressionExplainer:
             important_variables[group] = impact
 
         preds = self._sort(important_variables)
-        print(preds)
         return self._explain_path(preds, instance)
 
     def _sort(self, important_variables):

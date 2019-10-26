@@ -30,7 +30,6 @@ def test_regression(seed):
         assert np.sum(exp.contributions) + exp.intercept == pytest.approx(
             pred[0]
         )
-        exp.print()
 
 
 def test_multiclass(seed):
@@ -50,7 +49,6 @@ def test_multiclass(seed):
     for i in range(2):
         observation = X_test[i: i + 1]
         exp = explainer.explain(observation)
-        exp.print()
         pred = clf.predict_proba(observation)
         # check invariant
         invariant = np.sum(exp.contributions, axis=0) + exp.intercept
