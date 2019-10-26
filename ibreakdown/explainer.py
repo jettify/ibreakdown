@@ -1,6 +1,5 @@
 import numpy as np
-import pandas as pd
-from .utils import normalize_array, multiply_row, to_matrix
+from .utils import normalize_array, to_matrix
 from .explanation import Explanation
 
 
@@ -47,8 +46,11 @@ class RegressionExplainer:
                     - sum(important_variables[g] for g in group)
                 )
 
-        preds = sorted(important_variables.items(), key=lambda v: -np.linalg.norm(v[1], axis=0))
+        preds = self._sort(important_variables)
         return self._explain_path(preds, instance)
+
+    def _sort(self, important_variables):
+        return sorted(important_variables.items(), key=lambda v: -abs(v[1]))
 
     def _explain_path(self, path, instance):
         _, num_features = self._data.shape
@@ -57,18 +59,36 @@ class RegressionExplainer:
         important_variables = []
         while features:
             group, _ = path.pop(0)
-            if not set([group] if isinstance(group, int) else group).issubset(features):
+            if not set([group] if isinstance(group, int) else group).issubset(
+                features
+            ):
                 continue
             new_data[:, group] = instance[:, group]
             pred_mean = self._mean_predict(new_data)
             important_variables.append((group, pred_mean))
-            features.difference_update(set([group] if isinstance(group, int) else group))
+            features.difference_update(
+                set([group] if isinstance(group, int) else group)
+            )
 
         cummulative = [v[1] for v in important_variables]
         feature_indexes = [v[0] for v in important_variables]
         contrib = np.diff([self._baseline] + cummulative)
         featrue_values = feature_goup_vavlues(feature_indexes, instance)
-        return Explanation(feature_indexes, featrue_values, contrib, self._baseline, self._columns)
+        return Explanation(
+            feature_indexes,
+            featrue_values,
+            contrib,
+            self._baseline,
+            self._columns,
+        )
+
+
+def magnituge(v):
+    if isinstance(v[0], int):
+        impact = np.array([v[1]])
+    else:
+        impact = np.array(v[1])
+    return np.linalg.norm(impact, axis=1)[0]
 
 
 def features_groups(num_features):
@@ -80,13 +100,19 @@ def features_groups(num_features):
 
 
 def feature_goup_vavlues(feature_groups, instance):
-    featrue_values = [instance[:, group][0] if isinstance(group, int) else instance[:, group].tolist() for group in feature_groups]
+    featrue_values = [
+        instance[:, group][0]
+        if isinstance(group, int)
+        else instance[:, group].tolist()
+        for group in feature_groups
+    ]
     return featrue_values
 
 
 class ClassificationExplainer(RegressionExplainer):
 
-    def _most_important(self, yhats_diff):
-        most_important_idx = np.argmax(np.linalg.norm(yhats_diff, axis=1))
-        return most_important_idx
+    def _sort(self, important_variables):
+        return sorted(important_variables.items(), key=lambda v: -magnituge(v))
 
+    def _mean_predict(self, data):
+        return self._clf.predict_proba(data).mean(axis=0)
