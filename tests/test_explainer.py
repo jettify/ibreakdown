@@ -39,6 +39,7 @@ def test_features_pairs():
     assert result == [0, 1, 2, (0, 1), (0, 2), (1, 2)]
 
 
+@pytest.mark.skip(reason='WIP')
 def test_multiclass(seed):
     iris = load_iris()
     columns = iris.feature_names
