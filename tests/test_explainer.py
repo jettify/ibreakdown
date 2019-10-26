@@ -1,13 +1,10 @@
 import pytest
+import numpy as np
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from ibreakdown.explainer import (
-    RegressionExplainer,
-    ClassificationExplainer,
-    features_groups,
-)
+from ibreakdown.explainer import RegressionExplainer, ClassificationExplainer
 
 
 def test_regression(seed):
@@ -30,16 +27,12 @@ def test_regression(seed):
         pred = clf.predict(observation)
         exp = explainer.explain(observation)
         # check invariant
-        assert sum(exp.contributions) + exp.intercept == pytest.approx(pred[0])
+        assert np.sum(exp.contributions) + exp.intercept == pytest.approx(
+            pred[0]
+        )
         exp.print()
 
 
-def test_features_pairs():
-    result = features_groups(3)
-    assert result == [0, 1, 2, (0, 1), (0, 2), (1, 2)]
-
-
-@pytest.mark.skip(reason='WIP')
 def test_multiclass(seed):
     iris = load_iris()
     columns = iris.feature_names
@@ -48,11 +41,17 @@ def test_multiclass(seed):
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, random_state=seed
     )
-
     clf = RandomForestClassifier(n_estimators=100)
     clf.fit(X_train, y_train)
 
     explainer = ClassificationExplainer(clf)
     explainer.fit(X_train, columns)
-    exp = explainer.explain(X_test[0])
-    exp.print()
+
+    for i in range(2):
+        observation = X_test[i: i + 1]
+        exp = explainer.explain(observation)
+        exp.print()
+        pred = clf.predict_proba(observation)
+        # check invariant
+        invariant = np.sum(exp.contributions, axis=0) + exp.intercept
+        assert invariant == pytest.approx(pred[0])

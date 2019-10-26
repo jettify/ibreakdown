@@ -38,15 +38,17 @@ class RegressionExplainer:
             new_data[:, group] = instance[:, group]
             pred_mean = self._mean_predict(new_data)
             if isinstance(group, int):
-                important_variables[group] = pred_mean - self._baseline
+                impact = pred_mean - self._baseline
             else:
-                important_variables[group] = (
+                impact = (
                     pred_mean
                     - self._baseline
-                    - sum(important_variables[g] for g in group)
+                    - np.sum(important_variables[g] for g in group)
                 )
+            important_variables[group] = impact
 
         preds = self._sort(important_variables)
+        print(preds)
         return self._explain_path(preds, instance)
 
     def _sort(self, important_variables):
@@ -72,7 +74,7 @@ class RegressionExplainer:
 
         cummulative = [v[1] for v in important_variables]
         feature_indexes = [v[0] for v in important_variables]
-        contrib = np.diff([self._baseline] + cummulative)
+        contrib = np.diff(np.array([self._baseline] + cummulative), axis=0)
         featrue_values = feature_goup_vavlues(feature_indexes, instance)
         return Explanation(
             feature_indexes,
@@ -84,11 +86,7 @@ class RegressionExplainer:
 
 
 def magnituge(v):
-    if isinstance(v[0], int):
-        impact = np.array([v[1]])
-    else:
-        impact = np.array(v[1])
-    return np.linalg.norm(impact, axis=1)[0]
+    return np.linalg.norm(np.array(v[1]), axis=0)
 
 
 def features_groups(num_features):
@@ -110,7 +108,6 @@ def feature_goup_vavlues(feature_groups, instance):
 
 
 class ClassificationExplainer(RegressionExplainer):
-
     def _sort(self, important_variables):
         return sorted(important_variables.items(), key=lambda v: -magnituge(v))
 
