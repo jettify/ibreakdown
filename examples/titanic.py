@@ -10,21 +10,13 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
 
-def read_dataset(seed=None):
+def read_dataset(columns, seed=None):
     url = (
         'https://web.stanford.edu/class/archive/'
         'cs/cs109/cs109.1166/stuff/titanic.csv'
     )
     df = pd.read_csv(url)
     y = df['Survived']
-    columns = [
-        'Age',
-        'Fare',
-        'Siblings/Spouses Aboard',
-        'Parents/Children Aboard',
-        'Pclass',
-        'Sex',
-    ]
     X = df[columns]
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -46,7 +38,6 @@ def build_model(num_features, cat_features, seed=None):
 
 def main():
     seed = 42
-    X_train, X_test, y_train, y_test = read_dataset(seed)
     columns = [
         'Age',  # num
         'Fare',  # num
@@ -55,6 +46,7 @@ def main():
         'Pclass',  # cat
         'Sex',  # cat
     ]
+    X_train, X_test, y_train, y_test = read_dataset(columns, seed)
     rf = build_model([0, 1, 2, 3], [4, 5], seed=seed)
 
     param_grid = {
@@ -63,6 +55,7 @@ def main():
         'randomforestclassifier__min_samples_split': [12],
         'randomforestclassifier__n_estimators': [100],
     }
+
     gs = GridSearchCV(
         estimator=rf, param_grid=param_grid, scoring='roc_auc', cv=3, n_jobs=-1
     )
@@ -71,11 +64,12 @@ def main():
     print(gs.best_score_)
     print(gs.best_params_)
     print('-' * 100)
-
+    class_map = ['Deceased', 'Survived']
+    classes = [class_map[i] for i in gs.classes_]
     explainer = ClassificationExplainer(gs)
-    explainer.fit(X_train, columns)
+    explainer.fit(X_train, columns, classes)
 
-    for i in range(5):
+    for i in range(10):
         observation = X_test[i: i + 1]
         exp = explainer.explain(observation)
         exp.print()
