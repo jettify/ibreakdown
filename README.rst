@@ -24,7 +24,9 @@ Explanations for Non-additive Predictive Models"* https://arxiv.org/abs/1903.114
 reference implementation in **R** (iBreakDown_)
 
 Intuition behind algorithm is following:
-::
+
+  ::
+
    The algorithm works in a similar spirit as SHAP or Break Down but is not
    restricted to additive effects. The intuition is the following:
 
@@ -50,11 +52,6 @@ Installation
 Installation process is simple, just::
 
     $ pip install ibreakdown
-
-
-
-
-
 
 
 Requirements
