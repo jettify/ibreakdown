@@ -39,6 +39,36 @@ Intuition behind algorithm is following:
 In depth explanation can be found in algorithm authors free book:
 *Predictive Models: Explore, Explain, and Debug* https://pbiecek.github.io/PM_VEE/iBreakDown.html
 
+
+Simple example
+--------------
+
+.. code:: python
+
+    # model = RandomForestClassifier(...)
+    explainer = ClassificationExplainer(model)
+    classes = ['Deceased', 'Survived']
+    explainer.fit(X_train, columns, classes)
+    exp = explainer.explain(observation)
+    exp.print()
+
+Please check full Titanic example here: https://github.com/jettify/ibreakdown/blob/master/examples/titanic.py
+
+.. code::
+   +------------------------------------+-----------------+--------------------+--------------------+
+   | Feature Name                       | Feature Value   |   Contrib:Deceased |   Contrib:Survived |
+   +------------------------------------+-----------------+--------------------+--------------------|
+   | intercept                          |                 |          0.613286  |          0.386714  |
+   | Sex                                | female          |         -0.305838  |          0.305838  |
+   | Pclass                             | 3               |          0.242448  |         -0.242448  |
+   | Fare                               | 7.7375          |         -0.119392  |          0.119392  |
+   | Siblings/Spouses Aboard            | 0               |         -0.0372811 |          0.0372811 |
+   | ('Age', 'Parents/Children Aboard') | [28.0 0]        |          0.0122196 |         -0.0122196 |
+   | PREDICTION                         |                 |          0.405443  |          0.594557  |
+   +------------------------------------+-----------------+--------------------+--------------------+
+
+
+
 Features
 ========
 * Supports predictions explanations for classification and regression
