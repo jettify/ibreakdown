@@ -12,7 +12,7 @@ if sys.version_info < PY36:
     raise RuntimeError('ibreakdown does not support Python earlier than 3.6')
 
 
-install_requires = ['numpy', 'terminaltables']
+install_requires = ['numpy', 'pandas', 'tabulate']
 if sys.version_info < PY37:
     install_requires.append('dataclasses==0.6')
 

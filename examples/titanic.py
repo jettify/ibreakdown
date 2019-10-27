@@ -70,7 +70,7 @@ def main():
     explainer.fit(X_train, columns, classes)
 
     for i in range(10):
-        observation = X_test[i : i + 1]
+        observation = X_test[i: i + 1]
         exp = explainer.explain(observation)
         exp.print()
 
