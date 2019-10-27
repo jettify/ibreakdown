@@ -66,9 +66,7 @@ class ClassificationExplanation(RegressionExplanation):
         feature_values = [None] + self.feature_values + [None]
 
         data = {'Feature Name': feature_names, 'Feature Value': feature_values}
-        contrib_columns = [
-            f'Contribution:{c}' for c in enumerate(self._classes)
-        ]
+        contrib_columns = [f'Contrib:{c}' for c in self._classes]
         contrib_val = np.concatenate(
             ([self.intercept], self.contributions, [self.pred_value])
         )
