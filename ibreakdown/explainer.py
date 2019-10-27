@@ -1,35 +1,57 @@
 import numpy as np
-from .utils import normalize_array, to_matrix
-from .explanation import Explanation
+
+from .explanation import ClassificationExplanation, RegressionExplanation
+from .utils import (
+    normalize_array,
+    to_matrix,
+    magnituge,
+    features_groups,
+    feature_group_values,
+)
 
 
 class RegressionExplainer:
+
+    exp_class = RegressionExplanation
+
     def __init__(self, clf):
         self._clf = clf
         self._data = None
         self._columns = None
-        self._hints = None
         self._baseline = None
 
-    def fit(self, data, columns=None, hints=None):
+    def fit(self, data, columns=None, classes=None):
         self._data = data
         if columns is None:
             columns = list(range(data.shape[1]))
 
         self._columns = columns
-        self._hints = hints
+        self._classes = classes or [0]
         self._baseline = self._mean_predict(data)
 
     def explain(self, row):
         instance = to_matrix(row)
         instance = normalize_array(instance)
-        exp = self._explain_bottom_up(instance)
-        return exp
+        path = self._compute_explanation_path(instance)
+        pred_value = self._mean_predict(instance)
+        feature_indexes, featrue_values, contrib = self._explain_path(
+            path, instance
+        )
+
+        return self.exp_class(
+            pred_value,
+            feature_indexes,
+            featrue_values,
+            contrib,
+            self._baseline,
+            self._columns,
+            self._classes,
+        )
 
     def _mean_predict(self, data):
         return self._clf.predict(data).mean(axis=0)
 
-    def _explain_bottom_up(self, instance):
+    def _compute_explanation_path(self, instance):
         num_rows, num_features = self._data.shape
         important_variables = {}
         groups = features_groups(num_features)
@@ -47,8 +69,8 @@ class RegressionExplainer:
                 )
             important_variables[group] = impact
 
-        preds = self._sort(important_variables)
-        return self._explain_path(preds, instance)
+        path = self._sort(important_variables)
+        return path
 
     def _sort(self, important_variables):
         return sorted(important_variables.items(), key=lambda v: -abs(v[1]))
@@ -74,39 +96,14 @@ class RegressionExplainer:
         cummulative = [v[1] for v in important_variables]
         feature_indexes = [v[0] for v in important_variables]
         contrib = np.diff(np.array([self._baseline] + cummulative), axis=0)
-        featrue_values = feature_goup_vavlues(feature_indexes, instance)
-        return Explanation(
-            feature_indexes,
-            featrue_values,
-            contrib,
-            self._baseline,
-            self._columns,
-        )
-
-
-def magnituge(v):
-    return np.linalg.norm(np.array(v[1]), axis=0)
-
-
-def features_groups(num_features):
-    result = list(range(0, num_features))
-    for i in range(0, num_features):
-        for j in range(i + 1, num_features):
-            result.append((i, j))
-    return result
-
-
-def feature_goup_vavlues(feature_groups, instance):
-    featrue_values = [
-        instance[:, group][0]
-        if isinstance(group, int)
-        else instance[:, group].tolist()
-        for group in feature_groups
-    ]
-    return featrue_values
+        featrue_values = feature_group_values(feature_indexes, instance)
+        return feature_indexes, featrue_values, contrib
 
 
 class ClassificationExplainer(RegressionExplainer):
+
+    exp_class = ClassificationExplanation
+
     def _sort(self, important_variables):
         return sorted(important_variables.items(), key=lambda v: -magnituge(v))
 

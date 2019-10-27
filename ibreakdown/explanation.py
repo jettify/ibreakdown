@@ -1,23 +1,28 @@
 import sys
 
-from terminaltables import AsciiTable
+import pandas as pd
+import numpy as np
+from tabulate import tabulate
 
 
-class Explanation:
+class RegressionExplanation:
     """Class provides access to prediction explanation data.
     """
 
     def __init__(
         self,
+        pred_value,
         feature_indexes,
         feature_values,
         contributions,
         intercept,
         columns=None,
+        classes=None,
     ):
+        self.pred_value = pred_value
         self.feature_indexes = feature_indexes
         self.feature_values = feature_values
-        self.contributions = contributions.tolist()
+        self.contributions = contributions
         self.columns = columns
         self.intercept = intercept
         self.digits = 4
@@ -25,37 +30,56 @@ class Explanation:
             self._columns = columns
         else:
             self._columns = [str(v) for v in range(len(feature_values))]
+        if classes is None:
+            self._classes = [str(i) for i in range(len(intercept))]
+        else:
+            self._classes = classes
 
-    def _make_table_data(self,):
-        table_data = []
-        header = ('Feature', 'Value', 'Contribution')
-        table_data.append(header)
+    def _build_df(self):
+        feature_names = [
+            idx_to_name(idx, self._columns) for idx in self.feature_indexes
+        ]
+        feature_names = ['intercept'] + feature_names + ['PREDICTION']
+        feature_values = [None] + self.feature_values + [None]
+        contrib = [self.intercept] + self.contributions + [self.pred_value]
 
-        baseline = ('baseline', '-', str(self.intercept))
-        table_data.append(baseline)
-        for i, feature_idx in enumerate(self.feature_indexes):
-            if isinstance(i, int):
-                row = (
-                    self._columns[feature_idx],
-                    self.feature_values[i],
-                    self.contributions[i],
-                )
-            else:
-                row = (
-                    (
-                        self._columns[feature_idx[0]],
-                        self._columns[feature_idx[0]],
-                    ),
-                    self.feature_values[i],
-                    self.contributions[i],
-                )
-            table_data.append(row)
-        return table_data
+        data = {
+            'Feature Name': feature_names,
+            'Feature Value': feature_values,
+            'Contributions': contrib,
+        }
+        df = pd.DataFrame(data)
+        return df
 
     def print(self, file=sys.stdout, flush=False):
-        table_data = self._make_table_data()
-        table = AsciiTable(table_data)
-        print(table.table, file=file, flush=flush)
+        df = self._build_df()
+        table = tabulate(df, tablefmt='psql', headers='keys')
+        print(table, file=file, flush=flush)
 
-    def raw_result(self):
-        return self.data
+
+class ClassificationExplanation(RegressionExplanation):
+    def _build_df(self):
+        feature_names = [
+            idx_to_name(idx, self._columns) for idx in self.feature_indexes
+        ]
+        feature_names = ['intercept'] + feature_names + ['PREDICTION']
+        feature_values = [None] + self.feature_values + [None]
+
+        data = {'Feature Name': feature_names, 'Feature Value': feature_values}
+        contrib_columns = [
+            f'Contribution:{c}' for c in enumerate(self._classes)
+        ]
+        contrib_val = np.concatenate(
+            ([self.intercept], self.contributions, [self.pred_value])
+        )
+        data.update(zip(contrib_columns, contrib_val.T))
+        df = pd.DataFrame(data)
+        return df
+
+
+def idx_to_name(idx, columns):
+    if isinstance(idx, int):
+        n = columns[idx]
+    else:
+        n = tuple(columns[i] for i in idx)
+    return n
