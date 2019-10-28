@@ -1,5 +1,8 @@
+import io
+
 import pytest
 import numpy as np
+
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
@@ -30,6 +33,9 @@ def test_regression(seed):
         assert np.sum(exp.contributions) + exp.intercept == pytest.approx(
             pred[0]
         )
+        with io.StringIO() as buf:
+            exp.print(file=buf, flush=True)
+            assert len(buf.getvalue()) > 0
 
 
 def test_multiclass(seed):
@@ -53,3 +59,7 @@ def test_multiclass(seed):
         # check invariant
         invariant = np.sum(exp.contributions, axis=0) + exp.intercept
         assert invariant == pytest.approx(pred[0])
+
+        with io.StringIO() as buf:
+            exp.print(file=buf, flush=True)
+            assert len(buf.getvalue()) > 0
