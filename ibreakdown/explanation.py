@@ -41,7 +41,9 @@ class RegressionExplanation:
         ]
         feature_names = ['intercept'] + feature_names + ['PREDICTION']
         feature_values = [None] + self.feature_values + [None]
-        contrib = [self.intercept] + self.contributions + [self.pred_value]
+        contrib = (
+            [self.intercept] + self.contributions.tolist() + [self.pred_value]
+        )
 
         data = {
             'Feature Name': feature_names,

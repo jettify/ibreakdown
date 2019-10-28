@@ -2,11 +2,11 @@ import numpy as np
 
 from .explanation import ClassificationExplanation, RegressionExplanation
 from .utils import (
+    feature_group_values,
+    features_groups,
+    magnituge,
     normalize_array,
     to_matrix,
-    magnituge,
-    features_groups,
-    feature_group_values,
 )
 
 

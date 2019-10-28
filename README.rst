@@ -55,6 +55,7 @@ Simple example
 Please check full Titanic example here: https://github.com/jettify/ibreakdown/blob/master/examples/titanic.py
 
 .. code::
+
    +------------------------------------+-----------------+--------------------+--------------------+
    | Feature Name                       | Feature Value   |   Contrib:Deceased |   Contrib:Survived |
    +------------------------------------+-----------------+--------------------+--------------------|
