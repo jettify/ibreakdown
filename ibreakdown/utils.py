@@ -17,11 +17,12 @@ def to_matrix(data):
     return data if not hasattr(data, 'values') else data.values
 
 
-def features_groups(num_features, exclude_set=None):
+def features_groups(num_features, check_interactions=True):
     result = list(range(0, num_features))
-    for i in range(0, num_features):
-        for j in range(i + 1, num_features):
-            result.append((i, j))
+    if check_interactions:
+        for i in range(0, num_features):
+            for j in range(i + 1, num_features):
+                result.append((i, j))
     return result
 
 

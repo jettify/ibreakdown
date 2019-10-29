@@ -29,10 +29,10 @@ class RegressionExplainer:
         self._classes = classes or [0]
         self._baseline = self._mean_predict(data)
 
-    def explain(self, row):
+    def explain(self, row, check_interactions=True):
         instance = to_matrix(row)
         instance = normalize_array(instance)
-        path = self._compute_explanation_path(instance)
+        path = self._compute_explanation_path(instance, check_interactions)
         pred_value = self._mean_predict(instance)
         feature_indexes, featrue_values, contrib = self._explain_path(
             path, instance
@@ -51,10 +51,10 @@ class RegressionExplainer:
     def _mean_predict(self, data):
         return self._clf.predict(data).mean(axis=0)
 
-    def _compute_explanation_path(self, instance):
+    def _compute_explanation_path(self, instance, check_interactions=True):
         num_rows, num_features = self._data.shape
         important_variables = {}
-        groups = features_groups(num_features)
+        groups = features_groups(num_features, check_interactions)
         for group in groups:
             new_data = np.copy(self._data)
             new_data[:, group] = instance[:, group]

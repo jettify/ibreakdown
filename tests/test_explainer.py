@@ -10,6 +10,11 @@ from sklearn.model_selection import train_test_split
 from ibreakdown.explainer import RegressionExplainer, ClassificationExplainer
 
 
+def assert_exp_invariant(exp, pred):
+    invariant = np.sum(exp.contributions, axis=0) + exp.intercept
+    assert invariant == pytest.approx(pred)
+
+
 def test_regression(seed):
     boston = load_boston()
     columns = list(boston.feature_names)
@@ -29,10 +34,11 @@ def test_regression(seed):
         observation = X_test[i: i + 1]
         pred = clf.predict(observation)
         exp = explainer.explain(observation)
-        # check invariant
-        assert np.sum(exp.contributions) + exp.intercept == pytest.approx(
-            pred[0]
-        )
+        assert_exp_invariant(exp, pred[0])
+
+        exp = explainer.explain(observation, check_interactions=False)
+        assert_exp_invariant(exp, pred[0])
+
         with io.StringIO() as buf:
             exp.print(file=buf, flush=True)
             assert len(buf.getvalue()) > 0
@@ -56,9 +62,10 @@ def test_multiclass(seed):
         observation = X_test[i: i + 1]
         exp = explainer.explain(observation)
         pred = clf.predict_proba(observation)
-        # check invariant
-        invariant = np.sum(exp.contributions, axis=0) + exp.intercept
-        assert invariant == pytest.approx(pred[0])
+        assert_exp_invariant(exp, pred[0])
+
+        exp = explainer.explain(observation, check_interactions=False)
+        assert_exp_invariant(exp, pred[0])
 
         with io.StringIO() as buf:
             exp.print(file=buf, flush=True)
