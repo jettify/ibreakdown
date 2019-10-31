@@ -19,14 +19,15 @@ class RegressionExplainer:
         self._data = None
         self._columns = None
         self._baseline = None
+        self._classes = None
 
-    def fit(self, data, columns=None, classes=None):
+    def fit(self, data, columns=None):
         self._data = data
         if columns is None:
             columns = list(range(data.shape[1]))
 
+        self._classes = [0]
         self._columns = columns
-        self._classes = classes or [0]
         self._baseline = self._mean_predict(data)
 
     def explain(self, row, check_interactions=True):
@@ -107,3 +108,7 @@ class ClassificationExplainer(RegressionExplainer):
 
     def _mean_predict(self, data):
         return self._clf.predict_proba(data).mean(axis=0)
+
+    def fit(self, data, columns=None, classes=None):
+        self._classes = classes or [0]
+        super().fit(data, columns=columns)
