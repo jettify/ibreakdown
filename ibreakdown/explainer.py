@@ -34,10 +34,9 @@ class RegressionExplainer:
         instance = normalize_array(instance)
         path = self._compute_explanation_path(instance, check_interactions)
         pred_value = self._mean_predict(instance)
-        feature_indexes, featrue_values, contrib = self._explain_path(
-            path, instance
-        )
+        feature_indexes, contrib = self._explain_path(path, instance)
 
+        featrue_values = feature_group_values(feature_indexes, instance)
         return self.exp_class(
             pred_value,
             feature_indexes,
@@ -65,7 +64,7 @@ class RegressionExplainer:
                 impact = (
                     pred_mean
                     - self._baseline
-                    - np.sum(important_variables[g] for g in group)
+                    - np.sum([important_variables[g] for g in group])
                 )
             important_variables[group] = impact
 
@@ -96,8 +95,7 @@ class RegressionExplainer:
         cummulative = [v[1] for v in important_variables]
         feature_indexes = [v[0] for v in important_variables]
         contrib = np.diff(np.array([self._baseline] + cummulative), axis=0)
-        featrue_values = feature_group_values(feature_indexes, instance)
-        return feature_indexes, featrue_values, contrib
+        return feature_indexes, contrib
 
 
 class ClassificationExplainer(RegressionExplainer):
