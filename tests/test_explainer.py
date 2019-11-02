@@ -28,7 +28,7 @@ def test_regression(seed):
         n_estimators=600, max_depth=2, random_state=seed, oob_score=True
     )
     clf.fit(X_train, y_train)
-    explainer = RegressionExplainer(clf)
+    explainer = RegressionExplainer(clf.predict)
     explainer.fit(X_train, columns)
     for i in range(2):
         observation = X_test[i: i + 1]
@@ -55,7 +55,7 @@ def test_multiclass(seed):
     clf = RandomForestClassifier(n_estimators=100)
     clf.fit(X_train, y_train)
 
-    explainer = ClassificationExplainer(clf)
+    explainer = ClassificationExplainer(clf.predict_proba)
     explainer.fit(X_train, columns)
 
     for i in range(2):

@@ -14,8 +14,8 @@ class RegressionExplainer:
 
     exp_class = RegressionExplanation
 
-    def __init__(self, clf):
-        self._clf = clf
+    def __init__(self, predict_func):
+        self._predict_func = predict_func
         self._data = None
         self._columns = None
         self._baseline = None
@@ -49,7 +49,7 @@ class RegressionExplainer:
         )
 
     def _mean_predict(self, data):
-        return self._clf.predict(data).mean(axis=0)
+        return self._predict_func(data).mean(axis=0)
 
     def _compute_explanation_path(self, instance, check_interactions=True):
         num_rows, num_features = self._data.shape
@@ -105,9 +105,6 @@ class ClassificationExplainer(RegressionExplainer):
 
     def _sort(self, important_variables):
         return sorted(important_variables.items(), key=lambda v: -magnituge(v))
-
-    def _mean_predict(self, data):
-        return self._clf.predict_proba(data).mean(axis=0)
 
     def fit(self, data, columns=None, classes=None):
         self._classes = classes or [0]
