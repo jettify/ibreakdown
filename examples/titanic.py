@@ -66,7 +66,7 @@ def main():
     print('-' * 100)
     class_map = ['Deceased', 'Survived']
     classes = [class_map[i] for i in gs.classes_]
-    explainer = ClassificationExplainer(gs)
+    explainer = ClassificationExplainer(gs.predict_proba)
     explainer.fit(X_train, columns, classes)
 
     for i in range(10):

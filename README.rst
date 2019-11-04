@@ -46,7 +46,7 @@ Simple example
 .. code:: python
 
     # model = RandomForestClassifier(...)
-    explainer = ClassificationExplainer(model)
+    explainer = ClassificationExplainer(model.predict_proba)
     classes = ['Deceased', 'Survived']
     explainer.fit(X_train, columns, classes)
     exp = explainer.explain(observation)
