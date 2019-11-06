@@ -43,7 +43,7 @@ def main():
     explainer.fit(X_train, columns)
 
     for i in range(2):
-        observation = X_test[i : i + 1]
+        observation = X_test[i: i + 1]
         gs.predict(observation)
         exp = explainer.explain(observation)
         # Do not calculate interactions for faster results
