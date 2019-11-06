@@ -36,19 +36,8 @@ def build_model(num_features, cat_features, seed=None):
     return model
 
 
-def main():
-    seed = 42
-    columns = [
-        'Age',  # num
-        'Fare',  # num
-        'Siblings/Spouses Aboard',  # num
-        'Parents/Children Aboard',  # num
-        'Pclass',  # cat
-        'Sex',  # cat
-    ]
-    X_train, X_test, y_train, y_test = read_dataset(columns, seed)
+def train_model(X_train, y_train, seed=None):
     rf = build_model([0, 1, 2, 3], [4, 5], seed=seed)
-
     param_grid = {
         'columntransformer__pipeline__simpleimputer__strategy': ['mean'],
         'randomforestclassifier__min_samples_leaf': [5],
@@ -60,13 +49,25 @@ def main():
         estimator=rf, param_grid=param_grid, scoring='roc_auc', cv=3, n_jobs=-1
     )
     gs.fit(X_train, y_train)
-    print('-' * 100)
-    print(gs.best_score_)
-    print(gs.best_params_)
-    print('-' * 100)
+    return gs.best_estimator_
+
+
+def main():
+    seed = 42
+    columns = [
+        'Age',  # num
+        'Fare',  # num
+        'Siblings/Spouses Aboard',  # num
+        'Parents/Children Aboard',  # num
+        'Pclass',  # cat
+        'Sex',  # cat
+    ]
+    X_train, X_test, y_train, y_test = read_dataset(columns, seed)
+    model = train_model(X_train, y_train, seed=seed)
+
     class_map = ['Deceased', 'Survived']
-    classes = [class_map[i] for i in gs.classes_]
-    explainer = ClassificationExplainer(gs.predict_proba)
+    classes = [class_map[i] for i in model.classes_]
+    explainer = ClassificationExplainer(model.predict_proba)
     explainer.fit(X_train, columns, classes)
 
     for i in range(10):

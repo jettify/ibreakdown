@@ -1,8 +1,8 @@
+from ibreakdown.explainer import RegressionExplainer
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
-from ibreakdown.explainer import RegressionExplainer
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
 
 
 def read_data(seed=None):
@@ -15,11 +15,8 @@ def read_data(seed=None):
     return X_train, X_test, y_train, y_test, columns
 
 
-def main():
-    seed = 42
-    X_train, X_test, y_train, y_test, columns = read_data(seed=seed)
+def train_model(X_train, y_train, seed=None):
     rf = RandomForestRegressor(random_state=seed)
-
     param_grid = {
         'n_estimators': [300],
         'max_depth': [3],
@@ -34,17 +31,20 @@ def main():
         n_jobs=-1,
     )
     gs.fit(X_train, y_train)
-    print('-' * 100)
-    print(gs.best_score_)
-    print(gs.best_params_)
-    print('-' * 100)
+    return gs.best_estimator_
 
-    explainer = RegressionExplainer(gs.predict)
+
+def main():
+    seed = 42
+    X_train, X_test, y_train, y_test, columns = read_data(seed=seed)
+    model = train_model(X_train, y_train, seed=seed)
+
+    explainer = RegressionExplainer(model.predict)
     explainer.fit(X_train, columns)
 
     for i in range(2):
         observation = X_test[i: i + 1]
-        gs.predict(observation)
+        model.predict(observation)
         exp = explainer.explain(observation)
         # Do not calculate interactions for faster results
         exp = explainer.explain(observation, check_interactions=False)
