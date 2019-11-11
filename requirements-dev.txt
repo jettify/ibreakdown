@@ -10,7 +10,7 @@ flake8-tuple==0.4.0
 flake8==3.7.9
 ipdb==0.12.2
 mypy==0.740
-numpy==1.17.3
+numpy==1.17.4
 pandas==0.25.3
 pyroma==2.6
 pytest-cov==2.8.1
