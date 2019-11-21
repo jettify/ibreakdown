@@ -7,7 +7,13 @@ from sklearn.datasets import load_boston
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from ibreakdown.explainer import RegressionExplainer, ClassificationExplainer
+from ibreakdown import (
+    RegressionExplainer,
+    ClassificationExplainer,
+    URegressionExplainer,
+    UClassificationExplainer,
+)
+from sklearn.ensemble import GradientBoostingRegressor
 
 
 def assert_exp_invariant(exp, pred):
@@ -92,4 +98,27 @@ def test_uregression(seed):
         exp.plot()
 
         assert_exp_invariant(exp, pred)
+
+
+def test_uclassification(seed):
+    iris = load_iris()
+    columns = iris.feature_names
+    X = iris.data
+    y = iris.target
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, random_state=seed
+    )
+    clf = RandomForestClassifier(n_estimators=100)
+    clf.fit(X_train, y_train)
+
+    explainer = UClassificationExplainer(clf.predict_proba)
+    explainer.fit(X_train, columns)
+
+    for i in range(2):
+        observation = X_test[i: i + 1]
+        exp = explainer.explain(observation)
+        pred = clf.predict_proba(observation)
+
+        exp = explainer.explain(observation, check_interactions=False)
+        exp.print()
         assert_exp_invariant(exp, pred)
