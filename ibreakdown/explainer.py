@@ -86,8 +86,6 @@ class ClassificationExplanation(RegressionExplanation):
         return df
 
 
-
-
 class RegressionExplainer:
 
     exp_class = RegressionExplanation

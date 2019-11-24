@@ -6,7 +6,6 @@ from tabulate import tabulate
 import matplotlib.pyplot as plt
 
 from .utils import (
-    magnituge,
     normalize_array,
     to_matrix,
 )
@@ -14,12 +13,7 @@ from .utils import (
 
 class RegressionExplanation:
     def __init__(
-            self,
-            prediction,
-            observation,
-            contributions,
-            baseline,
-            columns=None
+        self, prediction, observation, contributions, baseline, columns=None
     ):
         self.prediction = prediction
         self.observation = observation[0]
@@ -35,14 +29,18 @@ class RegressionExplanation:
         feature_names = ['intercept'] + feature_names + ['PREDICTION']
         feature_values = [None] + self.observation.tolist() + [None]
         contrib = (
-            [self.baseline] + self.contributions[0].tolist() + [self.prediction]
+            [self.baseline]
+            + self.contributions[0].tolist()
+            + [self.prediction]
         )
 
         data = {
             'Feature Name': feature_names,
             'Feature Value': feature_values,
             'Contributions': contrib,
-            'Contributions STD': [0] + np.std(self.contributions, axis=0).tolist() + [0]
+            'Contributions STD': [0]
+            + np.std(self.contributions, axis=0).tolist()
+            + [0],
         }
         df = pd.DataFrame(data)
         return df
@@ -107,7 +105,7 @@ class URegressionExplainer:
             observation,
             contributions,
             self._baseline,
-            columns=self._columns
+            columns=self._columns,
         )
         return exp
 
