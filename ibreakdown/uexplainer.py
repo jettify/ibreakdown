@@ -5,13 +5,10 @@ import pandas as pd
 from tabulate import tabulate
 import matplotlib.pyplot as plt
 
-from .utils import (
-    normalize_array,
-    to_matrix,
-)
+from .utils import normalize_array, to_matrix
 
 
-class RegressionExplanation:
+class URegressionExplanation:
     def __init__(
         self, prediction, observation, contributions, baseline, columns=None
     ):
@@ -62,7 +59,7 @@ class RegressionExplanation:
 
 class URegressionExplainer:
 
-    exp_class = RegressionExplanation
+    exp_class = URegressionExplanation
 
     def __init__(self, predict_func, sample_size=7, seed=None):
         self._predict_func = predict_func
@@ -112,23 +109,30 @@ class URegressionExplainer:
     def _mean_predict(self, data):
         return self._predict_func(data).mean(axis=0)
 
+    def _make_zeros(self):
+        return np.zeros(self._data.shape[1])
+
+    def _sort(self, feature_impact):
+        p = np.argsort(np.abs(feature_impact), axis=0)[::-1]
+        return p.reshape(1, -1)[0]
+
     def _compute_explanation_path(self, instance):
         num_rows, num_features = self._data.shape
         features = np.arange(num_features)
-        feature_impact = np.zeros(num_features)
+
+        feature_impact = self._make_zeros()
 
         for feature_idx in features:
             new_data = np.copy(self._data)
             new_data[:, feature_idx] = instance[:, feature_idx]
             pred_mean = self._mean_predict(new_data)
             feature_impact[feature_idx] = pred_mean
-        p = np.argsort(np.abs(feature_impact), axis=0)[::-1]
-        return p.reshape(1, -1)[0]
+        return self._sort(feature_impact)
 
     def _explain_path(self, path, instance):
         _, num_features = self._data.shape
         new_data = np.copy(self._data)
-        pred_mean = np.zeros(num_features)
+        pred_mean = self._make_zeros()
         for i, feature_idx in enumerate(path):
             new_data[:, feature_idx] = instance[:, feature_idx]
             pred_mean[i] = self._mean_predict(new_data)
@@ -138,5 +142,10 @@ class URegressionExplainer:
 
 
 class UClassificationExplainer(URegressionExplainer):
-    def _mean_predict(self, data):
-        return self._predict_func(data).mean(axis=0)
+
+    def _make_zeros(self):
+        return np.zeros((self._data.shape[1], self._baseline.shape[0]))
+
+    def _sort(self, feature_impact):
+        p = np.argsort(np.linalg.norm(feature_impact, axis=1))[::-1]
+        return p.reshape(1, -1)[0]
