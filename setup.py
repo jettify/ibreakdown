@@ -21,7 +21,7 @@ def read(f):
     return open(os.path.join(os.path.dirname(__file__), f)).read().strip()
 
 
-extras_require = {}
+extras_require = {'seaborn': ['seaborn']}
 
 
 def read_version():
