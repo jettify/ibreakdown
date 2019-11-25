@@ -3,9 +3,19 @@ import sys
 import pandas as pd
 
 from tabulate import tabulate
-import matplotlib.pyplot as plt
-
 from .utils import normalize_array, to_matrix
+
+try:
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt, sns = None, None
+
+
+_FEATURE_NAME = 'Feature Name'
+_FEATURE_VALUE = 'Feature Value'
+_CONTRIBUTION = 'Contribution'
+_CONTRIBUTION_STD = 'Contribution STD'
 
 
 class URegressionExplanation:
@@ -13,31 +23,21 @@ class URegressionExplanation:
         self, prediction, observation, contributions, baseline, columns=None
     ):
         self.prediction = prediction
-        self.observation = observation[0]
+        self.observation = observation
         self.contributions = contributions
         self.baseline = baseline
         if columns is not None:
             self._columns = columns
         else:
             self._columns = [str(v) for v in range(len(observation))]
+        self.df = self._build_df()
 
     def _build_df(self):
-        feature_names = self._columns
-        feature_names = ['intercept'] + feature_names + ['PREDICTION']
-        feature_values = [None] + self.observation.tolist() + [None]
-        contrib = (
-            [self.baseline]
-            + self.contributions[0].tolist()
-            + [self.prediction]
-        )
-
         data = {
-            'Feature Name': feature_names,
-            'Feature Value': feature_values,
-            'Contributions': contrib,
-            'Contributions STD': [0]
-            + np.std(self.contributions, axis=0).tolist()
-            + [0],
+            _FEATURE_NAME: self._columns,
+            _FEATURE_VALUE: self.observation,
+            _CONTRIBUTION: self.contributions[0],
+            _CONTRIBUTION_STD: np.std(self.contributions, axis=0),
         }
         df = pd.DataFrame(data)
         return df
@@ -48,13 +48,36 @@ class URegressionExplanation:
         print(table, file=file, flush=flush)
 
     def plot(self):
-        fig1, ax1 = plt.subplots()
-        ax1.set_title('Feature Contributions')
-        y_axis = self.contributions[0]
-        yerr = np.std(self.contributions, axis=0)
-        x_axis = self._columns
-        ax1.bar(x_axis, y_axis, yerr=yerr)
-        fig1.savefig(f'foo_.png')
+        if sns is None or plt is None:
+            raise RuntimeError('Please install seaborn plotting library')
+
+        sns.set(style='whitegrid')
+        df = self.df.copy()
+        df = df.iloc[np.argsort(np.abs(df[_CONTRIBUTION].values))[::-1]]
+        f, ax = plt.subplots(figsize=(13, 15))
+
+        fn = df[_FEATURE_NAME].astype(str)
+        fv = df[_FEATURE_VALUE].astype(str)
+        y = '[' + fn + ']: ' + fv
+
+        sns.set_color_codes('muted')
+        b = sns.barplot(
+            x=df[_CONTRIBUTION],
+            y=y,
+            data=df,
+            label=_CONTRIBUTION,
+            color='b',
+            xerr=df[_CONTRIBUTION_STD],
+        )
+
+        title = 'Predicted: [{}]\nBaseline: [{}]'.format(
+            self.prediction, self.baseline
+        )
+        b.axes.set_title(title, fontsize=20)
+        ax.legend(ncol=2, loc='lower right', frameon=True)
+        ax.set(ylabel=_FEATURE_NAME, xlabel=_FEATURE_VALUE)
+        sns.despine(left=True, bottom=True)
+        return f
 
 
 class URegressionExplainer:
@@ -99,7 +122,7 @@ class URegressionExplainer:
         contributions = np.array(contributions_stats)
         exp = self.exp_class(
             pred_value,
-            observation,
+            observation[0],
             contributions,
             self._baseline,
             columns=self._columns,
@@ -142,7 +165,6 @@ class URegressionExplainer:
 
 
 class UClassificationExplainer(URegressionExplainer):
-
     def _make_zeros(self):
         return np.zeros((self._data.shape[1], self._baseline.shape[0]))
 

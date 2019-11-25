@@ -7,5 +7,5 @@ __all__ = (
     'ClassificationExplainer',
     'RegressionExplainer',
     'UClassificationExplainer',
-    'URegressionExplainer'
+    'URegressionExplainer',
 )
