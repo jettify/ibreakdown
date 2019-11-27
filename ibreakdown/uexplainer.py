@@ -102,7 +102,7 @@ class URegressionExplainer:
         self._columns = columns
         self._baseline = self._mean_predict(data)
 
-    def explain(self, row, check_interactions=True):
+    def explain(self, row):
         observation = to_matrix(row)
         observation = normalize_array(observation)
         pred_value = self._mean_predict(observation)
