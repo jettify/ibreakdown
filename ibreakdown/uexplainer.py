@@ -20,7 +20,13 @@ _CONTRIBUTION_STD = 'Contribution STD'
 
 class URegressionExplanation:
     def __init__(
-        self, prediction, observation, contributions, baseline, columns=None
+        self,
+        prediction,
+        observation,
+        contributions,
+        baseline,
+        columns=None,
+        classes=None,
     ):
         self.prediction = prediction
         self.observation = observation
@@ -30,7 +36,7 @@ class URegressionExplanation:
             self._columns = columns
         else:
             self._columns = [str(v) for v in range(len(observation))]
-        self.df = self._build_df()
+        self._classes = None
 
     def _build_df(self):
         data = {
@@ -52,7 +58,7 @@ class URegressionExplanation:
             raise RuntimeError('Please install seaborn plotting library')
 
         sns.set(style='whitegrid')
-        df = self.df.copy()
+        df = self._build_df()
         df = df.iloc[np.argsort(np.abs(df[_CONTRIBUTION].values))[::-1]]
         f, ax = plt.subplots(figsize=(13, 15))
 
@@ -80,6 +86,50 @@ class URegressionExplanation:
         return f
 
 
+class UClassificationExplanation(URegressionExplanation):
+    def __init__(
+        self,
+        prediction,
+        observation,
+        contributions,
+        baseline,
+        columns=None,
+        classes=None,
+    ):
+        super().__init__(
+            prediction,
+            observation,
+            contributions,
+            baseline,
+            columns=columns,
+            classes=classes,
+        )
+        self._classes = classes or list(range(len(self.baseline)))
+
+    def _build_df(self, class_idx):
+        class_name = self._classes[class_idx]
+        c = _CONTRIBUTION + f': {class_name}'
+        c_std = _CONTRIBUTION_STD + f': {class_name}'
+        data = {
+            _FEATURE_NAME: self._columns,
+            _FEATURE_VALUE: self.observation,
+            c: self.contributions[0][:, class_idx],
+            c_std: np.std(self.contributions, axis=0)[:, class_idx],
+        }
+        df = pd.DataFrame(data)
+        return df
+
+    def print(self, class_=None, file=sys.stdout, flush=False):
+        if class_ is None:
+            class_idx = 0
+        else:
+            class_idx = self._classes.index(class_)
+
+        df = self._build_df(class_idx)
+        table = tabulate(df, tablefmt='psql', headers='keys')
+        print(table, file=file, flush=flush)
+
+
 class URegressionExplainer:
 
     exp_class = URegressionExplanation
@@ -98,7 +148,6 @@ class URegressionExplainer:
         if columns is None:
             columns = list(range(data.shape[1]))
 
-        self._classes = [0]
         self._columns = columns
         self._baseline = self._mean_predict(data)
 
@@ -126,6 +175,7 @@ class URegressionExplainer:
             contributions,
             self._baseline,
             columns=self._columns,
+            classes=self._classes,
         )
         return exp
 
@@ -165,9 +215,20 @@ class URegressionExplainer:
 
 
 class UClassificationExplainer(URegressionExplainer):
+
+    exp_class = UClassificationExplanation
+
+    def __init__(self, predict_func, sample_size=7, seed=None):
+        super().__init__(predict_func, sample_size=sample_size, seed=seed)
+        self._classes = None
+
     def _make_zeros(self):
         return np.zeros((self._data.shape[1], self._baseline.shape[0]))
 
     def _sort(self, feature_impact):
         p = np.argsort(np.linalg.norm(feature_impact, axis=1))[::-1]
         return p.reshape(1, -1)[0]
+
+    def fit(self, data, columns=None, classes=None):
+        super().fit(data, columns=columns)
+        self._classes = classes
