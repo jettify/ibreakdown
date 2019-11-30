@@ -48,6 +48,10 @@ class URegressionExplanation:
         df = pd.DataFrame(data)
         return df
 
+    @property
+    def df(self):
+        return self._build_df()
+
     def print(self, file=sys.stdout, flush=False):
         df = self._build_df()
         table = tabulate(df, tablefmt='psql', headers='keys')
@@ -106,28 +110,72 @@ class UClassificationExplanation(URegressionExplanation):
         )
         self._classes = classes or list(range(len(self.baseline)))
 
-    def _build_df(self, class_idx):
-        class_name = self._classes[class_idx]
-        c = _CONTRIBUTION + f': {class_name}'
-        c_std = _CONTRIBUTION_STD + f': {class_name}'
+    def _build_df(self, class_idx=None):
         data = {
             _FEATURE_NAME: self._columns,
             _FEATURE_VALUE: self.observation,
-            c: self.contributions[0][:, class_idx],
-            c_std: np.std(self.contributions, axis=0)[:, class_idx],
         }
+        if class_idx is not None:
+            classes = [(class_idx, self._classes[class_idx])]
+        else:
+            classes = [(i, c) for i, c in enumerate(self._classes)]
+
+        for class_idx, class_name in classes:
+            c = _CONTRIBUTION + f'\n {class_name}'
+            c_std = _CONTRIBUTION_STD + f'\n {class_name}'
+            data[c] = self.contributions[0][:, class_idx]
+            data[c_std] = np.std(self.contributions, axis=0)[:, class_idx]
+
         df = pd.DataFrame(data)
         return df
 
     def print(self, class_=None, file=sys.stdout, flush=False):
         if class_ is None:
-            class_idx = 0
+            class_idx = None
         else:
             class_idx = self._classes.index(class_)
 
         df = self._build_df(class_idx)
         table = tabulate(df, tablefmt='psql', headers='keys')
         print(table, file=file, flush=flush)
+
+    def plot(self, class_=None):
+        if sns is None or plt is None:
+            raise RuntimeError('Please install seaborn plotting library')
+        if class_ is None:
+            class_idx = None
+        else:
+            class_idx = self._classes.index(class_)
+
+        class_name = self._classes[class_idx]
+        c = _CONTRIBUTION + f'\n {class_name}'
+        c_std = _CONTRIBUTION_STD + f'\n {class_name}'
+        sns.set(style='whitegrid')
+        df = self._build_df(class_idx)
+        df = df.iloc[np.argsort(np.abs(df[c].values))[::-1]]
+        f, ax = plt.subplots(figsize=(10, 10))
+
+        fn = df[_FEATURE_NAME].astype(str)
+        fv = df[_FEATURE_VALUE].astype(str)
+        y = '[' + fn + ']: ' + fv
+
+        sns.set_color_codes('muted')
+        b = sns.barplot(
+            x=df[c],
+            y=y,
+            data=df,
+            label=c,
+            color='b',
+            xerr=df[c_std],
+        )
+
+        title = 'Predicted: [{}]\nBaseline: [{}]'.format(
+            self.prediction, self.baseline
+        )
+        b.axes.set_title(title, fontsize=20)
+        ax.legend(ncol=2, loc='lower right', frameon=True)
+        ax.set(ylabel=_FEATURE_NAME, xlabel=_FEATURE_VALUE)
+        sns.despine(left=True, bottom=True)
 
 
 class URegressionExplainer:
