@@ -1,4 +1,4 @@
-from ibreakdown.explainer import RegressionExplainer
+from ibreakdown.explainer import IRegressionExplainer
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
@@ -39,7 +39,7 @@ def main():
     X_train, X_test, y_train, y_test, columns = read_data(seed=seed)
     model = train_model(X_train, y_train, seed=seed)
 
-    explainer = RegressionExplainer(model.predict)
+    explainer = IRegressionExplainer(model.predict)
     explainer.fit(X_train, columns)
 
     for i in range(2):
