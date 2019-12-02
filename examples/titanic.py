@@ -1,6 +1,6 @@
 import pandas as pd
 
-from ibreakdown import ClassificationExplainer
+from ibreakdown import IClassificationExplainer
 from sklearn.compose import make_column_transformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
@@ -67,7 +67,7 @@ def main():
 
     class_map = ['Deceased', 'Survived']
     classes = [class_map[i] for i in model.classes_]
-    explainer = ClassificationExplainer(model.predict_proba)
+    explainer = IClassificationExplainer(model.predict_proba)
     explainer.fit(X_train, columns, classes)
 
     for i in range(10):
