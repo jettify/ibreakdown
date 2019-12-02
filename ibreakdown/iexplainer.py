@@ -13,7 +13,7 @@ from .utils import (
 )
 
 
-class RegressionExplanation:
+class IRegressionExplanation:
     """Class provides access to prediction explanation data.
     """
 
@@ -68,7 +68,7 @@ class RegressionExplanation:
         print(table, file=file, flush=flush)
 
 
-class ClassificationExplanation(RegressionExplanation):
+class IClassificationExplanation(IRegressionExplanation):
     def _build_df(self):
         feature_names = [
             idx_to_name(idx, self._columns) for idx in self.feature_indexes
@@ -86,9 +86,9 @@ class ClassificationExplanation(RegressionExplanation):
         return df
 
 
-class RegressionExplainer:
+class IRegressionExplainer:
 
-    exp_class = RegressionExplanation
+    exp_class = IRegressionExplanation
 
     def __init__(self, predict_func):
         self._predict_func = predict_func
@@ -175,9 +175,9 @@ class RegressionExplainer:
         return feature_indexes, contrib
 
 
-class ClassificationExplainer(RegressionExplainer):
+class IClassificationExplainer(IRegressionExplainer):
 
-    exp_class = ClassificationExplanation
+    exp_class = IClassificationExplanation
 
     def _sort(self, important_variables):
         return sorted(important_variables.items(), key=lambda v: -magnituge(v))
