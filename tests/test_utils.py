@@ -1,4 +1,4 @@
-from ibreakdown.explainer import features_groups
+from ibreakdown.iexplainer import features_groups
 
 
 def test_features_pairs():
