@@ -16,7 +16,7 @@ pyroma==2.6
 pytest-cov==2.8.1
 pytest-sugar==0.9.3
 pytest==5.4.2
-scikit-learn==0.23.0
+scikit-learn==0.23.1
 scipy==1.4.1
 seaborn==0.10.1
 tabulate==0.8.7
