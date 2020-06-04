@@ -9,7 +9,7 @@ flake8-quotes==3.2.0
 flake8-tuple==0.4.1
 flake8==3.7.9
 ipdb==0.13.2
-mypy==0.770
+mypy==0.780
 numpy==1.18.5
 pandas==1.0.4
 pyroma==2.6
