@@ -8,7 +8,7 @@ flake8-pyi==20.5.0
 flake8-quotes==3.2.0
 flake8-tuple==0.4.1
 flake8==3.7.9
-ipdb==0.13.3
+ipdb==0.13.4
 mypy==0.782
 numpy==1.19.2
 pandas==1.1.2
